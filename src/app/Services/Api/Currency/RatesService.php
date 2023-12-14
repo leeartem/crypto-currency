@@ -58,6 +58,6 @@ class RatesService extends AbstractApiService
 
     private function handleValue(float $value): float
     {
-        return round($value * config('currency.commission_multiplier'), 2);
+        return round($value * config('currency.commission_multiplier'), config('currency.short_precision'));
     }
 }
