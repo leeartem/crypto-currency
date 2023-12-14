@@ -6,12 +6,13 @@ use App\Exceptions\Api\Exceptions\IncorrectParamsException;
 use App\Exceptions\Currency\InvalidCurrencyException;
 use App\Services\Api\AbstractApiService;
 use App\Services\Api\Currency\Dto\CoinsEnum;
+use App\Services\Api\Currency\Vendors\BlockchainInfo\BlockchainInfoClient;
 use GuzzleHttp\Exception\GuzzleException;
 
 class ConvertService extends AbstractApiService
 {
     public function __construct(
-        private RatesService $ratesService
+        private BlockchainInfoClient $blockchainInfoClient
     ){
     }
 
@@ -29,7 +30,7 @@ class ConvertService extends AbstractApiService
         // но обойдемся массивом
         $this->isValid($params);
 
-        $rates = $this->ratesService->run($params);
+        $rates = $this->blockchainInfoClient->getRates();
 
         [$result, $rate] = $this->convert(
             $params['currency_from'],

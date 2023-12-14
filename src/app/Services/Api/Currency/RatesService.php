@@ -3,6 +3,7 @@
 namespace App\Services\Api\Currency;
 
 use App\Exceptions\Api\Exceptions\IncorrectParamsException;
+use App\Exceptions\Currency\InvalidCurrencyException;
 use App\Services\Api\AbstractApiService;
 use App\Services\Api\Currency\Vendors\BlockchainInfo\BlockchainInfoClient;
 use App\Services\Api\Currency\Vendors\BlockchainInfo\Exceptions\ApiBadResponse;
@@ -19,7 +20,7 @@ class RatesService extends AbstractApiService
      * @param array $params
      * @return array
      * @throws ApiBadResponse
-     * @throws IncorrectParamsException|GuzzleException
+     * @throws IncorrectParamsException|GuzzleException|InvalidCurrencyException
      */
     public function run(array $params): array
     {
@@ -28,15 +29,19 @@ class RatesService extends AbstractApiService
         $rates =  $this->blockchainInfoClient->getRates();
         $currency = $params['currency'] ?? null;
 
-        if ($currency && isset($rates[$currency])) {
+        if ($currency) {
+            if (!isset($rates[$currency])) {
+                throw new InvalidCurrencyException();
+            }
+
             return [
-                $currency => $rates[$currency]['buy']
+                $currency => $this->handleValue($rates[$currency])
             ];
         }
 
         $result = [];
-        foreach ($rates as $rate) {
-            $result[$rate['symbol']] = $rate['buy'];
+        foreach ($rates as $key => $rate) {
+            $result[$key] = $this->handleValue($rate);
         }
 
         asort($result);
@@ -49,5 +54,10 @@ class RatesService extends AbstractApiService
         return [
             'currency' => 'nullable|string|min:3|max:3'
         ];
+    }
+
+    private function handleValue(float $value): float
+    {
+        return round($value * config('currency.commission_multiplier'), 2);
     }
 }

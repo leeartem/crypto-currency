@@ -40,6 +40,13 @@ class BlockchainInfoClient extends AbstractCurrencyClient
             throw new ApiBadResponse('Bad response from blockchain.info exceptions');
         }
 
-        return json_decode($response->getBody()->getContents(), true);
+        $result = [];
+        $data =  json_decode($response->getBody()->getContents(), true);
+
+        foreach ($data as $item) {
+            $result[$item['symbol']] = $item['buy'];
+        }
+
+        return $result;
     }
 }
